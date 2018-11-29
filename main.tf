@@ -155,11 +155,11 @@ resource "null_resource" "icp-docker" {
 resource "null_resource" "icp-image" {
   depends_on = ["null_resource.icp-docker"]
 
-  count = "${var.parallell-image-pull ? var.cluster_size : "1"}"
+  #count = "${var.parallell-image-pull ? var.cluster_size : "1"}"
 
   # Boot node is always the first entry in the IP list, so if we're not pulling in parallell this will only happen on boot node
   connection {
-    host          = "${element(local.icp-ips, count.index)}"
+    host          = "${local.boot-node}"
     user          = "${var.ssh_user}"
     private_key   = "${local.ssh_key}"
     agent         = "${var.ssh_agent}"
@@ -229,9 +229,10 @@ resource "null_resource" "icp-config" {
   provisioner "remote-exec" {
     inline = [
       "/tmp/icp-bootmaster-scripts/copy_cluster_skel.sh ${var.icp-version}",
+      "sudo chmod a+rx /opt/ibm/",
       "sudo chown ${var.ssh_user} /opt/ibm/cluster/*",
-      "chmod 600 /opt/ibm/cluster/ssh_key",
-      "python /tmp/icp-bootmaster-scripts/load-config.py ${var.config_strategy}"
+      "sudo chmod 600 /opt/ibm/cluster/ssh_key",
+      "sudo python /tmp/icp-bootmaster-scripts/load-config.py ${var.config_strategy}"
     ]
   }
 

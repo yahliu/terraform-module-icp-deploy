@@ -26,30 +26,32 @@ then
     # Separate out the filename and path
     nfs_mount=$(dirname ${image_location:4})
     image_file="${sourcedir}/$(basename ${image_location})"
-    mkdir -p ${sourcedir}
+    sudo mkdir -p ${sourcedir}
+    sudo chown $(whoami):$(whoami) -R ${sourcedir}
     # Mount
     sudo mount.nfs $nfs_mount $sourcedir
   elif [[ "${image_location:0:4}" == "http" ]]
   then
     # Figure out what we should name the file
-    filename="ibm-cloud-private-x86_64-${tag%-ee}.tar.gz"
-    mkdir -p ${sourcedir}
-    wget --continue -O ${sourcedir}/${filename} "${image_location#http:}"
+    filename="ibm-cloud-private-x86_64-${tag%}.tar.gz"
+    sudo mkdir -p ${sourcedir}
+    sudo chown $(whoami):$(whoami) -R ${sourcedir}
+    sudo wget --continue -O ${sourcedir}/${filename} "${image_location#http:}"
     image_file="${sourcedir}/${filename}"
   fi
 fi
-
-if [[ -s "$image_file" ]]
+nfs_mount=`mount | grep $sourcedir | wc -l`
+if [[ ${nfs_mount} == 1 ]]
 then
-  tar xf ${image_file} -O | sudo docker load
+  sudo tar xf ${image_file} -O | sudo docker load
 else
   # If we don't have an image locally we'll pull from docker registry
   if [[ -z $(docker images -q ${registry}${registry:+/}${org}/${repo}:${tag}) ]]; then
     # If this is a private registry we may need to log in
     if [[ ! -z "$username" ]]; then
-      docker login -u ${username} -p ${password} ${registry}
+      sudo docker login -u ${username} -p ${password} ${registry}
     fi
     # ${registry}${registry:+/} adds <registry>/ only if registry is specified
-    docker pull ${registry}${registry:+/}${org}/${repo}:${tag}
+    sudo docker pull ${registry}${registry:+/}${org}/${repo}:${tag}
   fi
 fi

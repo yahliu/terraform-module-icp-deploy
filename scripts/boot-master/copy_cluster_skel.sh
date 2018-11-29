@@ -11,9 +11,10 @@ source /tmp/icp-bootmaster-scripts/functions.sh
 # This will populate $org $repo and $tag
 parse_icpversion ${1}
 echo "registry=${registry:-not specified} org=$org repo=$repo tag=$tag"
+sudo mkdir -p /opt/ibm
+sudo chown $(whoami):$(whoami) -R /opt/ibm
 
-
-docker run -e LICENSE=accept -v /opt/ibm:/data ${registry}${registry:+/}${org}/${repo}:${tag} cp -r cluster /data
+sudo docker run -e LICENSE=accept -v /opt/ibm:/data ${registry}${registry:+/}${org}/${repo}:${tag} cp -r cluster /data
 
 # Take a backup of original config file, to keep a record of original settings and comments
-cp /opt/ibm/cluster/config.yaml /opt/ibm/cluster/config.yaml-original
+sudo cp /opt/ibm/cluster/config.yaml /opt/ibm/cluster/config.yaml-original
